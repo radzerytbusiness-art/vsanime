@@ -8,12 +8,14 @@ export default function Home({ onModeSelect, socket, onRoomCreated, onRoomJoined
   const [showOnlineOptions, setShowOnlineOptions] = useState(false);
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [showJoinRoom, setShowJoinRoom] = useState(false);
+  const [showWaitingRoom, setShowWaitingRoom] = useState(false);
 
   // Estados para crear/unirse sala
   const [roomName, setRoomName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [createdRoomData, setCreatedRoomData] = useState(null);
 
   const handlePlayClick = () => {
     setShowModeSelection(true);
@@ -56,16 +58,28 @@ export default function Home({ onModeSelect, socket, onRoomCreated, onRoomJoined
     socket.once('ROOM_CREATED', (data) => {
       console.log('✅ Sala creada:', data);
       setLoading(false);
+      setCreatedRoomData(data);
+      
+      // Ocultar modal de crear y mostrar modal de espera
+      setShowCreateRoom(false);
+      setShowWaitingRoom(true);
+      
       // Pasar los datos completos al App.js
       if (onRoomCreated) {
         onRoomCreated(data);
       }
-      navigate('/game');
     });
 
     socket.once('ERROR', (error) => {
       setLoading(false);
       setError(error.message || 'Error al crear la sala');
+    });
+
+    // Escuchar cuando la sala se llena
+    socket.once('ROOM_FULL', () => {
+      console.log('✅ Sala llena, iniciando juego...');
+      setShowWaitingRoom(false);
+      navigate('/game');
     });
   };
 
@@ -104,9 +118,19 @@ export default function Home({ onModeSelect, socket, onRoomCreated, onRoomJoined
     setShowJoinRoom(false);
     setShowOnlineOptions(false);
     setShowModeSelection(false);
+    setShowWaitingRoom(false);
     setRoomName('');
     setPassword('');
     setError('');
+  };
+
+  const handleCancelWaitingRoom = () => {
+    if (createdRoomData) {
+      socket.emit('LEAVE_ROOM', { roomId: createdRoomData.roomId });
+    }
+    setShowWaitingRoom(false);
+    setCreatedRoomData(null);
+    handleBack();
   };
 
   return (
@@ -269,8 +293,57 @@ export default function Home({ onModeSelect, socket, onRoomCreated, onRoomJoined
             </div>
           )}
 
+          {/* Modal Esperando Jugador */}
+          {showWaitingRoom && createdRoomData && (
+            <div className="waiting-room-overlay">
+              <div className="waiting-room-modal">
+                <span className="material-icons waiting-icon">schedule</span>
+                
+                <h2 className="waiting-title">Sala Creada</h2>
+                
+                <p className="waiting-message">
+                  Esperando que un jugador se una
+                  <span className="waiting-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </span>
+                </p>
+
+                <div className="room-info-box">
+                  <div className="room-info-item">
+                    <span className="room-info-label">Nombre de Sala</span>
+                    <span className="room-info-value">
+                      <span className="material-icons">label</span>
+                      {createdRoomData.roomName}
+                    </span>
+                  </div>
+                  <div className="room-info-item">
+                    <span className="room-info-label">ID de Sala</span>
+                    <span className="room-info-value">
+                      <span className="material-icons">fingerprint</span>
+                      {createdRoomData.roomId.substring(0, 8)}...
+                    </span>
+                  </div>
+                  <div className="room-info-item">
+                    <span className="room-info-label">Protección</span>
+                    <span className="room-info-value">
+                      <span className="material-icons">{password ? 'lock' : 'lock_open'}</span>
+                      {password ? 'Con Contraseña' : 'Sin Contraseña'}
+                    </span>
+                  </div>
+                </div>
+
+                <button className="waiting-cancel-btn" onClick={handleCancelWaitingRoom}>
+                  <span className="material-icons">close</span>
+                  Cancelar y Volver
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Créditos */}
-          {!showModeSelection && !showOnlineOptions && !showCreateRoom && !showJoinRoom && (
+          {!showModeSelection && !showOnlineOptions && !showCreateRoom && !showJoinRoom && !showWaitingRoom && (
             <div className="credits-section fade-in">
               <p className="credits-text">
                 Inspirado en el concepto de{' '}
