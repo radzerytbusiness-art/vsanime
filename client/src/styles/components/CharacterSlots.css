@@ -1,0 +1,113 @@
+.character-slot {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  border-radius: var(--border-radius);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: rgba(28, 16, 34, 0.3);
+  border: 2px solid rgba(148, 163, 184, 0.1);
+}
+
+.character-slot.slot-active {
+  border: 2px solid var(--primary);
+  background: linear-gradient(135deg, rgba(164, 19, 236, 0.1) 0%, rgba(28, 16, 34, 1) 100%);
+}
+
+.character-slot.slot-active:hover {
+  box-shadow: 0 0 15px rgba(164, 19, 236, 0.3);
+  border-color: #c084fc;
+  transform: translateY(-2px);
+}
+
+.character-slot.slot-dimmed {
+  opacity: 0.5;
+  filter: grayscale(0.8);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.character-slot.slot-dimmed:hover {
+  opacity: 0.7;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.character-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+}
+
+.character-info {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  width: 100%;
+  padding: 0.75rem;
+  text-align: center;
+  margin-top: auto;
+}
+
+.character-name {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.slot-text {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  margin-top: 0.5rem;
+}
+
+.character-slot .material-icons {
+  font-size: 2.5rem;
+  color: rgba(164, 19, 236, 0.4);
+  transition: color 0.2s ease;
+}
+
+.character-slot.slot-active:hover .material-icons {
+  color: rgba(164, 19, 236, 0.6);
+}
+
+@media (max-width: 1023px) {
+  .character-slot {
+    min-height: 80px;
+  }
+
+  .character-slot .material-icons {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .character-slot {
+    min-height: 60px;
+  }
+
+  .character-slot .material-icons {
+    font-size: 1.5rem;
+  }
+
+  .character-name {
+    font-size: 0.65rem;
+  }
+
+  .slot-text {
+    font-size: 0.65rem;
+  }
+}

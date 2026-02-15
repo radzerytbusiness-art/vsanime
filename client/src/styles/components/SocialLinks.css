@@ -1,0 +1,115 @@
+/* SocialLinks.css */
+
+.social-links-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(28, 16, 34, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.social-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(164, 19, 236, 0.4);
+}
+
+.social-link svg {
+  width: 20px;
+  height: 20px;
+  fill: rgba(255, 255, 255, 0.7);
+  transition: fill 0.3s ease;
+}
+
+.social-link:hover svg {
+  fill: white;
+}
+
+/* YouTube */
+.social-youtube {
+  border-color: #dc2626;
+}
+
+.social-youtube:hover {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: #dc2626;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+.social-youtube:hover svg {
+  fill: #dc2626;
+}
+
+/* TikTok */
+.social-tiktok {
+  border-color: #00f2ea;
+}
+
+.social-tiktok:hover {
+  background: rgba(0, 242, 234, 0.2);
+  border-color: #00f2ea;
+  box-shadow: 0 4px 15px rgba(0, 242, 234, 0.4);
+}
+
+.social-tiktok:hover svg {
+  fill: #00f2ea;
+}
+
+/* Variante con borde superior */
+.social-links-container.footer-variant {
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(164, 19, 236, 0.2);
+}
+
+/* Variante pequeña */
+.social-links-container.small {
+  gap: 0.75rem;
+}
+
+.social-links-container.small .social-link {
+  width: 36px;
+  height: 36px;
+}
+
+.social-links-container.small .social-link svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Variante fixed (para pantallas completas como CreateRoom/JoinRoom) */
+.social-links-container.fixed-bottom {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+@media (max-width: 640px) {
+  .social-links-container.fixed-bottom {
+    bottom: 1rem;
+  }
+
+  .social-link {
+    width: 36px;
+    height: 36px;
+  }
+
+  .social-link svg {
+    width: 18px;
+    height: 18px;
+  }
+}
