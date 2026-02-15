@@ -94,6 +94,8 @@ function App() {
                 onModeSelect={handleModeSelect} 
                 socket={socket}
                 socketError={socketError}
+                onRoomCreated={handleRoomCreated}
+                onRoomJoined={handleRoomJoined}
               />
             } 
           />

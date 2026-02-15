@@ -426,6 +426,28 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Abandonar sala
+  socket.on('LEAVE_ROOM', (data) => {
+    console.log(`🚪 [LEAVE_ROOM] Socket ${socket.id} abandonando sala ${data.roomId}`);
+    
+    const room = global.roomManager.getRoom(data.roomId);
+    if (!room) return;
+
+    // Notificar al otro jugador
+    socket.to(data.roomId).emit('PLAYER_DISCONNECTED', {
+      message: 'El otro jugador ha abandonado la sala'
+    });
+
+    // Salir de la sala
+    socket.leave(data.roomId);
+
+    // Eliminar la sala del manager
+    global.roomManager.rooms.delete(data.roomId);
+    global.roomManager.roomNameIndex.delete(room.roomName);
+    
+    console.log(`✅ [LEAVE_ROOM] Sala eliminada: ${room.roomName} (${data.roomId})`);
+  });
+
   // ==========================================
   // EVENTOS DE JUEGO LOCAL
   // ==========================================

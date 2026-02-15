@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/pages/Home.css';
 
-export default function Home({ onModeSelect, socket }) {
+export default function Home({ onModeSelect, socket, onRoomCreated, onRoomJoined, socketError }) {
   const navigate = useNavigate();
   const [showModeSelection, setShowModeSelection] = useState(false);
   const [showOnlineOptions, setShowOnlineOptions] = useState(false);
@@ -54,8 +54,12 @@ export default function Home({ onModeSelect, socket }) {
     });
 
     socket.once('ROOM_CREATED', (data) => {
+      console.log('✅ Sala creada:', data);
       setLoading(false);
-      onModeSelect('online');
+      // Pasar los datos completos al App.js
+      if (onRoomCreated) {
+        onRoomCreated(data);
+      }
       navigate('/game');
     });
 
@@ -80,8 +84,12 @@ export default function Home({ onModeSelect, socket }) {
     });
 
     socket.once('ROOM_JOINED', (data) => {
+      console.log('✅ Unido a sala:', data);
       setLoading(false);
-      onModeSelect('online');
+      // Pasar los datos completos al App.js
+      if (onRoomJoined) {
+        onRoomJoined(data);
+      }
       navigate('/game');
     });
 
@@ -105,7 +113,7 @@ export default function Home({ onModeSelect, socket }) {
     <div className="home-container">
       <div className="home-background">
         <img 
-          src="/assets/images/Background2.png"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZ7BQPvtZSbFwTcdPT_4UDu9cIzpQqftyMlkk04WYLKrtaWGNrvTnXg2O3dyC-wCUB2JvjAFvlwsTCJaedkYdjDRG2kSFl1moOtITNOXZD42JN5JMoi_CMJKaUz3-705Vg90Yz9O6udmdsBgBxs1SBz1sOhDMlpXVs-lF0bZhzXEAIMpkWgz1B4ZRQz4Dk6EyzEEJ9dRmCaEjnrNplSpkyWaPJE5iHrPQnlCviZub40wIEevhOeftoAwK8UhQmR4RALcJcVtfF" 
           alt="Background"
           className="home-bg-image"
         />

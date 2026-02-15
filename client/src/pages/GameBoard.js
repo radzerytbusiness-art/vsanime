@@ -145,6 +145,12 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
   };
 
   const handleReset = () => {
+    // Emitir evento para abandonar la sala
+    if (roomId) {
+      console.log('🚪 Abandonando sala:', roomId);
+      socket.emit('LEAVE_ROOM', { roomId });
+    }
+    
     if (onReset) onReset();
     navigate('/');
   };
