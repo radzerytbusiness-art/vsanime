@@ -5,11 +5,6 @@
   "devCommand": "cd client && npm start",
   "installCommand": "cd client && npm install",
   "framework": null,
-  "env": {
-    "REACT_APP_SERVER_URL": "@server_url",
-    "CI": "false",
-    "GENERATE_SOURCEMAP": "false"
-  },
   "build": {
     "env": {
       "CI": "false",
