@@ -137,7 +137,7 @@ export default function Home({ onModeSelect, socket, onRoomCreated, onRoomJoined
     <div className="home-container">
       <div className="home-background">
         <img 
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZ7BQPvtZSbFwTcdPT_4UDu9cIzpQqftyMlkk04WYLKrtaWGNrvTnXg2O3dyC-wCUB2JvjAFvlwsTCJaedkYdjDRG2kSFl1moOtITNOXZD42JN5JMoi_CMJKaUz3-705Vg90Yz9O6udmdsBgBxs1SBz1sOhDMlpXVs-lF0bZhzXEAIMpkWgz1B4ZRQz4Dk6EyzEEJ9dRmCaEjnrNplSpkyWaPJE5iHrPQnlCviZub40wIEevhOeftoAwK8UhQmR4RALcJcVtfF" 
+          src="/assets/images/Background2.png" 
           alt="Background"
           className="home-bg-image"
         />

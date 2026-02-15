@@ -26,6 +26,7 @@ export default function LocalGame({ sessionId, socket, onStart, onReset }) {
   const [showCharacterCard, setShowCharacterCard] = useState(true);
   const [showReorganizeCard, setShowReorganizeCard] = useState(true);
   const [showGameEndModal, setShowGameEndModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   useEffect(() => {
     // Verificar que el socket exista y esté conectado
@@ -421,7 +422,7 @@ export default function LocalGame({ sessionId, socket, onStart, onReset }) {
             </button>
           )}
 
-          <button className="btn-action info-btn">
+          <button className="btn-action info-btn" onClick={() => setShowInfoModal(true)}>
             <span className="material-icons">info</span>
           </button>
 
@@ -439,6 +440,68 @@ export default function LocalGame({ sessionId, socket, onStart, onReset }) {
         <div className="error-toast">
           <span>{error}</span>
           <button onClick={() => setError(null)}>×</button>
+        </div>
+      )}
+
+      {/* Modal de Información del Juego */}
+      {showInfoModal && (
+        <div className="game-end-overlay" onClick={() => setShowInfoModal(false)}>
+          <div className="game-end-modal info-modal" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="modal-close-btn" 
+              onClick={() => setShowInfoModal(false)}
+              title="Cerrar"
+            >
+              <span className="material-icons">close</span>
+            </button>
+            
+            <div className="modal-glow-effect"></div>
+            
+            <div className="modal-header">
+              <h1 className="modal-title">¿CÓMO JUGAR?</h1>
+              <div className="modal-divider"></div>
+            </div>
+
+            <div className="modal-content info-content">
+              <div className="info-section">
+                <h3>🎯 Objetivo</h3>
+                <p>Completa tu tablero de 6 personajes antes que tu oponente. Cada personaje debe ocupar un rol específico.</p>
+              </div>
+
+              <div className="info-section">
+                <h3>⚔️ Roles del Tablero</h3>
+                <p><strong>Capitán:</strong> Líder del equipo<br/>
+                <strong>Vice-Capitán:</strong> Segunda al mando<br/>
+                <strong>Tanque:</strong> Defensor<br/>
+                <strong>Healer:</strong> Sanador<br/>
+                <strong>Soporte 1 y 2:</strong> Apoyo</p>
+              </div>
+
+              <div className="info-section">
+                <h3>🎴 Turnos</h3>
+                <p>1. Roba un personaje de la bolsa<br/>
+                2. Asigna el personaje a un rol vacío de tu tablero<br/>
+                3. Opcional: Usa "Saltar" (solo 1 vez) para cambiar de personaje</p>
+              </div>
+
+              <div className="info-section">
+                <h3>🔄 Fase de Reorganizar</h3>
+                <p>Después de asignar, puedes intercambiar 2 personajes de posición en tu tablero. Si usaste "Saltar", no puedes reorganizar.</p>
+              </div>
+
+              <div className="info-section">
+                <h3>🏆 Victoria</h3>
+                <p>El primer jugador en completar los 6 roles gana la partida.</p>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button className="modal-btn btn-close" onClick={() => setShowInfoModal(false)}>
+                <span className="material-icons">check_circle</span>
+                <span>ENTENDIDO</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

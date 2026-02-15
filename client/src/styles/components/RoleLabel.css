@@ -34,7 +34,7 @@
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(160, 174, 192, 0.8);
+  color: #ffffff !important;
   display: none;
 }
 

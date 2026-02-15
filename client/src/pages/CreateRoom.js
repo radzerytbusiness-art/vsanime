@@ -21,9 +21,15 @@ export default function CreateRoom({ socket, onRoomCreated, onCancel }) {
       return;
     }
 
+    if (!password.trim()) {
+      setError('Por favor ingresa una contraseña');
+      setLoading(false);
+      return;
+    }
+
     socket.emit('CREATE_ROOM', {
       roomName: roomName.trim(),
-      password: password || null
+      password: password
     });
 
     socket.once('ROOM_CREATED', (data) => {
@@ -84,10 +90,7 @@ export default function CreateRoom({ socket, onRoomCreated, onCancel }) {
             </div>
 
             <div className="form-group">
-              <div className="label-row">
-                <label className="form-label">Password</label>
-                <span className="optional-badge">Opcional</span>
-              </div>
+              <label className="form-label">Password</label>
               <div className="input-group">
                 <span className="material-icons input-icon">vpn_key</span>
                 <input
@@ -96,6 +99,7 @@ export default function CreateRoom({ socket, onRoomCreated, onCancel }) {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
                 <button
                   type="button"

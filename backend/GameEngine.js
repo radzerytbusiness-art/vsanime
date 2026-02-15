@@ -136,7 +136,18 @@ class CharacterBag {
       {name: "Gowther", image: "./assets/images/characters/gowther.jpg"},
       {name: "Merlin", image: "./assets/images/characters/merlin.jpg"},
       {name: "Escanor", image: "./assets/images/characters/escanor.jpg"},
-      {name: "Arthur", image: "./assets/images/characters/arthur.jpg"}
+      {name: "Arthur", image: "./assets/images/characters/arthur.jpg"},
+      {name: "Sailor Mars", image: "./assets/images/characters/sailormars.jpg"},
+      {name: "Lancer", image: "./assets/images/characters/lancer.jpg"},
+      {name: "Saber", image: "./assets/images/characters/saber.jpg"},
+      {name: "Sailor Jupiter", image: "./assets/images/characters/sailorjupyter.jpg"},
+      {name: "Archer", image: "./assets/images/characters/archer.jpg"},
+      {name: "Gilgamesh", image: "./assets/images/characters/gilgamesh.jpg"},
+      {name: "Sailor Moon", image: "./assets/images/characters/sailormoon.jpg"},
+      {name: "Yajirobe", image: "./assets/images/characters/yajirobe.jpg"},
+      {name: "Sailor Mercury", image: "./assets/images/characters/sailormercury.jpg"},
+      {name: "Berserker", image: "./assets/images/characters/berseker.jpg"},
+      {name: "Krilin", image: "./assets/images/characters/krilin.jpg"}
     ];
 
     this.characters = animeCharacters.map((char, index) => 

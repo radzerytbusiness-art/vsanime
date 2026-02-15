@@ -329,3 +329,59 @@
     padding: 1.5rem;
   }
 }
+
+/* Fix responsive para JoinRoom - AGREGAR AL FINAL */
+
+.join-room-container {
+  min-height: 100vh;
+  height: auto;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 767px) {
+  .join-room-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .join-room-main {
+    flex-direction: column-reverse;
+  }
+
+  .join-room-left {
+    border-bottom: none;
+    border-top: 1px solid rgba(164, 19, 236, 0.1);
+    padding: 1.5rem 1rem;
+  }
+
+  .profile-section {
+    margin-top: 1rem;
+  }
+
+  .profile-avatar {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .profile-name {
+    font-size: 1.25rem;
+  }
+
+  .join-room-right {
+    padding: 1.5rem;
+  }
+
+  .form-input {
+    padding: 0.875rem 0.875rem 0.875rem 2.75rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .join-room-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .join-room-right {
+    padding: 1.25rem 1rem;
+  }
+}
