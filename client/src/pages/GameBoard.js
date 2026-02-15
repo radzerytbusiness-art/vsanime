@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/pages/GameBoard.css';
+import '../styles/pages/GameBoardExtras.css';
 import CharacterSlot from '../components/CharacterSlot';
 import RoleLabel from '../components/RoleLabel';
 import SocialLinks from '../components/SocialLinks';
