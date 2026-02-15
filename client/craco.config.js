@@ -1,7 +1,17 @@
 module.exports = {
   webpack: {
     configure: (webpackConfig) => {
-      // Deshabilitar CSS minification agresiva
+      // DESHABILITAR CSS Minimizer completamente
+      const optimization = webpackConfig.optimization || {};
+      
+      if (optimization.minimizer) {
+        // Filtrar el CSS Minimizer para removerlo
+        optimization.minimizer = optimization.minimizer.filter(
+          (minimizer) => minimizer.constructor.name !== 'CssMinimizerPlugin'
+        );
+      }
+
+      // Ignorar orden de CSS para evitar warnings
       const miniCssExtractPlugin = webpackConfig.plugins.find(
         (plugin) => plugin.constructor.name === 'MiniCssExtractPlugin'
       );
@@ -9,36 +19,8 @@ module.exports = {
       if (miniCssExtractPlugin && miniCssExtractPlugin.options) {
         miniCssExtractPlugin.options.ignoreOrder = true;
       }
-
-      // Configurar CSS minimizer para evitar errores
-      const optimization = webpackConfig.optimization || {};
-      if (optimization.minimizer) {
-        optimization.minimizer = optimization.minimizer.map((minimizer) => {
-          if (minimizer.constructor.name === 'CssMinimizerPlugin') {
-            minimizer.options = {
-              ...minimizer.options,
-              parallel: false,
-              minimizerOptions: {
-                preset: [
-                  'default',
-                  {
-                    discardComments: { removeAll: true },
-                    normalizeWhitespace: false,
-                  },
-                ],
-              },
-            };
-          }
-          return minimizer;
-        });
-      }
       
       return webpackConfig;
-    },
-  },
-  style: {
-    postcss: {
-      mode: 'file',
     },
   },
 };
