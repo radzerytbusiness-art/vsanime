@@ -20,16 +20,50 @@ const app = express();
 const port = process.env.PORT || 5000;
 const server = http.createServer(app);
 
+// Lista de orígenes permitidos
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://versus-anime.vercel.app',
+  process.env.CLIENT_URL
+].filter(Boolean); // Filtrar undefined/null
+
+console.log('🌐 Orígenes CORS permitidos:', allowedOrigins);
+
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: function (origin, callback) {
+      // Permitir requests sin origin (como Postman, apps móviles)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      // Permitir si está en la lista O si es subdominio de Vercel
+      if (allowedOrigins.includes(origin) || origin.includes('.vercel.app')) {
+        callback(null, true);
+      } else {
+        console.warn('❌ CORS bloqueado para:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 
-// Middleware
-app.use(cors());
+// Middleware CORS para rutas HTTP
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.includes('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
 // ============================================
