@@ -338,9 +338,56 @@ io.on('connection', (socket) => {
 
     console.log(`✅ [REORGANIZE] Reorganización exitosa`);
     
-    io.to(data.roomId).emit('REORGANIZED', {
-      gameState: room.gameEngine.getGameState()
-    });
+    const gameEnded = room.gameEngine.checkGameEnd();
+    
+    if (gameEnded) {
+      io.to(data.roomId).emit('GAME_FINISHED', {
+        gameState: room.gameEngine.getGameState()
+      });
+    } else {
+      io.to(data.roomId).emit('REORGANIZED', {
+        gameState: room.gameEngine.getGameState()
+      });
+    }
+  });
+
+  // Saltar reorganizar (online)
+  socket.on('SKIP_REORGANIZE', (data) => {
+    console.log(`⏭️ [SKIP_REORGANIZE] Socket ${socket.id} saltando reorganizar`);
+    
+    const room = global.roomManager.getRoom(data.roomId);
+    if (!room || !room.gameEngine) {
+      socket.emit('ERROR', { message: 'Sala no encontrada' });
+      return;
+    }
+
+    const player = room.players.find(p => p.socketId === socket.id);
+    if (!player) {
+      socket.emit('ERROR', { message: 'Jugador no encontrado' });
+      return;
+    }
+
+    const result = room.gameEngine.skipReorganize(player.id);
+    
+    if (!result.success) {
+      console.log(`❌ [SKIP_REORGANIZE] Error: ${result.error}`);
+      socket.emit('ERROR', { message: result.error });
+      return;
+    }
+
+    console.log(`✅ [SKIP_REORGANIZE] Reorganizar saltado`);
+
+    const gameEnded = room.gameEngine.checkGameEnd();
+    
+    if (gameEnded) {
+      io.to(data.roomId).emit('GAME_FINISHED', {
+        gameState: room.gameEngine.getGameState()
+      });
+    } else {
+      io.to(data.roomId).emit('REORGANIZE_SKIPPED', {
+        gameState: room.gameEngine.getGameState()
+      });
+    }
   });
 
   // Terminar turno
@@ -630,6 +677,53 @@ io.on('connection', (socket) => {
     console.error(`❌ [ERROR] Socket ${socket.id}:`, error);
   });
 });
+
+// ============================================
+// LIMPIEZA DE SALAS Y SESIONES INACTIVAS
+// ============================================
+
+// Limpiar salas inactivas cada 5 minutos
+setInterval(() => {
+  const now = new Date();
+  const INACTIVE_TIMEOUT = 15 * 60 * 1000; // 15 minutos
+
+  for (const [roomId, room] of global.roomManager.rooms.entries()) {
+    const timeSinceCreation = now - room.createdAt;
+    
+    // Si la sala tiene menos de 2 jugadores y pasaron 15 min
+    if (room.players.length < 2 && timeSinceCreation > INACTIVE_TIMEOUT) {
+      console.log(`🧹 [CLEANUP] Eliminando sala inactiva: ${room.roomName} (${roomId})`);
+      global.roomManager.rooms.delete(roomId);
+      continue;
+    }
+    
+    // Si la sala está abandonada (sin conexiones activas)
+    const hasActiveConnections = room.players.some(p => {
+      const socket = io.sockets.sockets.get(p.socketId);
+      return socket && socket.connected;
+    });
+    
+    if (!hasActiveConnections && timeSinceCreation > INACTIVE_TIMEOUT) {
+      console.log(`🧹 [CLEANUP] Eliminando sala abandonada: ${room.roomName} (${roomId})`);
+      global.roomManager.rooms.delete(roomId);
+    }
+  }
+}, 5 * 60 * 1000); // Cada 5 minutos
+
+// Limpiar sesiones locales inactivas cada 10 minutos
+setInterval(() => {
+  const now = new Date();
+  const INACTIVE_TIMEOUT = 30 * 60 * 1000; // 30 minutos
+
+  for (const [sessionId, session] of global.localGameManager.sessions.entries()) {
+    const timeSinceActivity = now - session.lastActivity;
+    
+    if (timeSinceActivity > INACTIVE_TIMEOUT) {
+      console.log(`🧹 [CLEANUP] Eliminando sesión local inactiva: ${sessionId}`);
+      global.localGameManager.sessions.delete(sessionId);
+    }
+  }
+}, 10 * 60 * 1000); // Cada 10 minutos
 
 // ============================================
 // INICIAR SERVIDOR

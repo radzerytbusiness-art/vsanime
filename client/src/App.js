@@ -16,6 +16,7 @@ function App() {
   const [localSessionId, setLocalSessionId] = useState(null);
   const [socketConnecting, setSocketConnecting] = useState(true);
   const [socketError, setSocketError] = useState(false);
+  const [roomData, setRoomData] = useState(null); // Para guardar roomId, playerRole, playerId
 
   useEffect(() => {
     console.log('🔌 Connecting to server:', SERVER_URL);
@@ -62,6 +63,16 @@ function App() {
     setGameMode(mode);
   };
 
+  const handleRoomCreated = (data) => {
+    setRoomData(data);
+    setGameMode('online');
+  };
+
+  const handleRoomJoined = (data) => {
+    setRoomData(data);
+    setGameMode('online');
+  };
+
   const handleLocalGameStart = (data) => {
     setLocalSessionId(data.sessionId);
   };
@@ -91,7 +102,7 @@ function App() {
             element={
               <CreateRoom 
                 socket={socket} 
-                onRoomCreated={() => setGameMode('online')} 
+                onRoomCreated={handleRoomCreated}
               />
             } 
           />
@@ -100,7 +111,7 @@ function App() {
             element={
               <JoinRoom 
                 socket={socket} 
-                onRoomJoined={() => setGameMode('online')} 
+                onRoomJoined={handleRoomJoined}
               />
             } 
           />
@@ -108,8 +119,15 @@ function App() {
             path="/game" 
             element={
               <GameBoard 
-                socket={socket} 
-                gameMode={gameMode} 
+                socket={socket}
+                roomId={roomData?.roomId}
+                playerRole={roomData?.playerRole}
+                playerId={roomData?.playerId}
+                gameMode={gameMode}
+                onReset={() => {
+                  setRoomData(null);
+                  setGameMode(null);
+                }}
               />
             } 
           />

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/pages/GameBoard.css';
 import CharacterSlot from '../components/CharacterSlot';
 import RoleLabel from '../components/RoleLabel';
-import '../styles/pages/GameBoardExtras.css';
+import SocialLinks from '../components/SocialLinks';
 
 const ROLES = ['CAPITAN', 'VICE_CAPITAN', 'TANQUE', 'HEALER', 'SOPORTE', 'SOPORTE_2'];
 const ROLE_ICONS = {
@@ -14,283 +15,387 @@ const ROLE_ICONS = {
   SOPORTE_2: 'auto_fix_high'
 };
 
-export default function GameBoard({ roomId, playerRole, socket, onReset }) {
+export default function GameBoard({ roomId, playerRole, playerId, socket, onReset }) {
+  const navigate = useNavigate();
   const [gameState, setGameState] = useState(null);
   const [currentCharacter, setCurrentCharacter] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [waitingForOpponent, setWaitingForOpponent] = useState(false);
-  const [gameStarted, setGameStarted] = useState(false);
+  const [reorganizingRole, setReorganizingRole] = useState(null);
+  const [showCharacterCard, setShowCharacterCard] = useState(true);
+  const [showReorganizeCard, setShowReorganizeCard] = useState(true);
+  const [showGameEndModal, setShowGameEndModal] = useState(false);
 
   useEffect(() => {
-    // Escuchar cuando la sala está llena
-    socket.on('ROOM_FULL', (data) => {
-      console.log('Sala llena, esperando inicio del juego...');
-      setWaitingForOpponent(true);
-    });
+    console.log('🎮 GameBoard montado - RoomID:', roomId, 'PlayerRole:', playerRole, 'PlayerID:', playerId);
 
-    // Escuchar cuando el juego inicia
+    // Esperar evento GAME_STARTED
     socket.on('GAME_STARTED', (data) => {
-      console.log('¡Juego iniciado!');
+      console.log('✅ Juego iniciado!', data);
       setGameState(data.gameState);
-      setGameStarted(true);
-      setWaitingForOpponent(false);
       setLoading(false);
     });
 
     socket.on('GAME_STATE', (data) => {
+      console.log('📊 Estado del juego recibido:', data);
       setGameState(data.gameState);
       setLoading(false);
     });
 
     socket.on('CHARACTER_DRAWN', (data) => {
+      console.log('🎴 Personaje robado:', data.character);
       setGameState(data.gameState);
       setCurrentCharacter(data.character);
+      setShowCharacterCard(true);
     });
 
     socket.on('CHARACTER_ASSIGNED', (data) => {
+      console.log('✅ Personaje asignado');
       setGameState(data.gameState);
       setCurrentCharacter(null);
+      setShowCharacterCard(true);
     });
 
     socket.on('CHARACTER_SKIPPED', (data) => {
+      console.log('⏭️ Personaje saltado');
       setGameState(data.gameState);
       if (data.newCharacter) {
         setCurrentCharacter(data.newCharacter);
+        setShowCharacterCard(true);
       } else {
         setCurrentCharacter(null);
       }
     });
 
     socket.on('REORGANIZED', (data) => {
+      console.log('🔄 Reorganizado');
       setGameState(data.gameState);
+      setReorganizingRole(null);
     });
 
-    socket.on('TURN_ENDED', (data) => {
+    socket.on('REORGANIZE_SKIPPED', (data) => {
+      console.log('⏭️ Reorganizar saltado');
       setGameState(data.gameState);
-      setCurrentCharacter(null);
+      setShowReorganizeCard(true);
     });
 
     socket.on('GAME_FINISHED', (data) => {
+      console.log('🏁 Juego terminado');
       setGameState(data.gameState);
-      setError('¡Juego terminado!');
+      setShowGameEndModal(true);
     });
 
     socket.on('PLAYER_DISCONNECTED', (data) => {
       setError(data.message);
-      setTimeout(() => {
-        onReset();
-      }, 3000);
     });
 
     socket.on('ERROR', (errorData) => {
+      console.error('❌ Error:', errorData);
       setError(errorData.message || 'Error desconocido');
-      setTimeout(() => setError(null), 3000);
+      setTimeout(() => setError(null), 5000);
     });
 
+    // Solicitar estado inicial
+    socket.emit('GAME_STATE_REQUEST', { roomId });
+
     return () => {
-      socket.off('ROOM_FULL');
       socket.off('GAME_STARTED');
       socket.off('GAME_STATE');
       socket.off('CHARACTER_DRAWN');
       socket.off('CHARACTER_ASSIGNED');
       socket.off('CHARACTER_SKIPPED');
       socket.off('REORGANIZED');
-      socket.off('TURN_ENDED');
+      socket.off('REORGANIZE_SKIPPED');
       socket.off('GAME_FINISHED');
       socket.off('PLAYER_DISCONNECTED');
       socket.off('ERROR');
     };
-  }, [roomId, socket, onReset]);
+  }, [roomId, socket, playerRole, playerId]);
 
   const handleDrawCharacter = () => {
+    console.log('🎴 Robando personaje...');
     socket.emit('DRAW_CHARACTER', { roomId });
   };
 
   const handleAssignCharacter = (role) => {
-    if (!currentCharacter) return;
+    console.log('✅ Asignando personaje a', role);
     socket.emit('ASSIGN_CHARACTER', { roomId, role });
   };
 
-  const handleSkip = () => {
-    if (!currentCharacter) return;
+  const handleSkipCharacter = () => {
+    console.log('⏭️ Saltando personaje...');
     socket.emit('SKIP_CHARACTER', { roomId });
   };
 
-  const handleReorganize = (roleA, roleB) => {
-    socket.emit('REORGANIZE', { roomId, roleA, roleB });
+  const handleReorganizeSelect = (role) => {
+    if (!reorganizingRole) {
+      setReorganizingRole(role);
+    } else if (reorganizingRole === role) {
+      setReorganizingRole(null);
+    } else {
+      console.log('🔄 Reorganizando:', reorganizingRole, '↔', role);
+      socket.emit('REORGANIZE', { roomId, roleA: reorganizingRole, roleB: role });
+      setReorganizingRole(null);
+    }
   };
 
-  const handleEndTurn = () => {
-    socket.emit('END_TURN', { roomId });
+  const handleSkipReorganize = () => {
+    console.log('⏭️ Saltando reorganizar...');
+    socket.emit('SKIP_REORGANIZE', { roomId });
+  };
+
+  const handleReset = () => {
+    if (onReset) onReset();
+    navigate('/');
+  };
+
+  const handleRestartGame = () => {
+    setError('La revancha aún no está implementada en modo online');
+    setShowGameEndModal(false);
   };
 
   if (loading) {
     return (
       <div className="loading-screen">
         <div className="loading-spinner"></div>
-        <p>{waitingForOpponent ? 'Esperando al otro jugador...' : 'Cargando juego...'}</p>
+        <p>Cargando juego...</p>
       </div>
     );
   }
 
-  if (!gameState || !gameStarted) {
+  if (!gameState) {
     return (
       <div className="loading-screen">
-        <p>Esperando inicio del juego...</p>
+        <div className="loading-spinner"></div>
+        <p>Esperando estado del juego...</p>
       </div>
     );
   }
 
+  // Determinar datos del jugador
   const isPlayer1 = playerRole === 'PLAYER_1';
-  const playerData = isPlayer1 ? gameState.player1 : gameState.player2;
+  const myPlayerData = isPlayer1 ? gameState.player1 : gameState.player2;
   const opponentData = isPlayer1 ? gameState.player2 : gameState.player1;
-  const isCurrentTurn = gameState.currentPlayer === (isPlayer1 ? 1 : 2);
+  const isMyTurn = gameState.currentPlayer === (isPlayer1 ? 1 : 2);
+  const canSkip = !myPlayerData.specialActionUsed && currentCharacter && isMyTurn;
+  const isReorganizePhase = gameState.reorganizePhase;
+
+  // Determinar quién debe reorganizar
+  let isMyReorganizeTurn = false;
+  let reorganizePlayerNumber = null;
+  
+  if (isReorganizePhase && gameState.reorganizePlayer) {
+    isMyReorganizeTurn = gameState.reorganizePlayer === myPlayerData.id;
+    reorganizePlayerNumber = gameState.reorganizePlayer === gameState.player1.id ? 1 : 2;
+  }
 
   return (
     <div className="gameboard-container">
-      <div className="gameboard-background">
-        <div className="bg-glow glow-1"></div>
-        <div className="bg-glow glow-2"></div>
-      </div>
+      <div className="gameboard-background"></div>
 
       <header className="gameboard-header">
         <div className="turn-indicator">
           <span className="material-icons">info</span>
           <span className="turn-text">
-            {isCurrentTurn ? '¡Tu turno!' : `Turno de ${isPlayer1 ? 'Jugador 2' : 'Jugador 1'}`}
+            {isReorganizePhase 
+              ? `Fase Reorganizar - Jugador ${reorganizePlayerNumber}`
+              : `Turno: Jugador ${gameState.currentPlayer}`
+            }
           </span>
-          <div className="timer">15s</div>
+          <div className="timer">∞</div>
         </div>
       </header>
 
-      <div className="player-stats">
-        <div className="player-info my-player">
-          <div className="player-avatar">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDFAemZeqVkz_L_HhTv1eNHJG7Lk1gfevv1B8yHz8-mwT494KhaLFKLoEKtCRHjiyPvo8-jgSRaDXnYtDnI2qpFQ0P5H8tNaGS3OKpE08GfOO3CDG079jQBd0vZnpXQDoyRX6OJblNN3jZX-xPd8EGG9LqzHxBErmt_H6XSrhMzIzr7Q-eKkFgz3gwIhvR3NkcwkEUVycn2x93WTq90wZwwmI4EGOfAFydqZAQYSdIfC8otyVYjiy-vjQac_AaxOL1wf542QtJ0MDI"
-              alt="Player"
-            />
-            {isCurrentTurn && <div className="status-online"></div>}
-          </div>
-          <div className="player-details">
-            <p className="player-status">{isCurrentTurn ? 'Tu turno' : 'Esperando...'}</p>
-            <div className="player-progress">
-              <div className="progress-bar" style={{ width: `${(Object.values(playerData.board).filter(x => x).length / 6) * 100}%` }}></div>
-            </div>
-            <p className="player-level">
-              {Object.values(playerData.board).filter(x => x).length}/6 personajes
-            </p>
-          </div>
-        </div>
-
-        <div className="player-info opponent-player">
-          <div className="player-avatar">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmkejpwvDq4lxvVD5x4VqsDJb0-vcFw9GuUrnccemxYWgvY_bqBcXqV8Py4NuRKfIKxEmum71oVvCV6tECD_-kekIWuJY9H1PUUuw2WBbBNQiwHK_7iQ-Wssg85cKL_Z0NJhh5RG0EK8-skS0GhdqVI9tRyWIz6dJzG7PNnBGZno_lE3-PkI6NBQ-zBHWKE7ajigrzvkG_9eZEgHp6hjbKggFBNWztFyAgwMCSNWzg3cd-7eZPPcslgakXoWCb7hp-Ivg49csGvDPf"
-              alt="Opponent"
-            />
-          </div>
-          <div className="player-details text-right">
-            <p className="player-status opponent-status">
-              {!isCurrentTurn ? 'Su turno' : 'Esperando...'}
-            </p>
-            <div className="player-progress">
-              <div className="progress-bar opponent" style={{ width: `${(Object.values(opponentData.board).filter(x => x).length / 6) * 100}%` }}></div>
-            </div>
-            <p className="player-level">
-              {Object.values(opponentData.board).filter(x => x).length}/6 personajes
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Mostrar personaje actual si es tu turno */}
-      {isCurrentTurn && currentCharacter && (
+      {/* Tarjeta de personaje actual */}
+      {currentCharacter && isMyTurn && showCharacterCard && (
         <div className="current-character-display">
           <div className="character-card">
-            <img src={currentCharacter.image} alt={currentCharacter.name} />
+            <button 
+              className="btn-hide-card" 
+              onClick={() => setShowCharacterCard(false)}
+              title="Ocultar"
+            >
+              <span className="material-icons">visibility_off</span>
+            </button>
+            <img 
+              src={`/assets/images/characters/${currentCharacter.name.toLowerCase().replace(/\s+/g, '_')}.jpg`} 
+              alt={currentCharacter.name}
+              onError={(e) => e.target.src = '/assets/images/characters/placeholder.jpg'}
+            />
             <h3>{currentCharacter.name}</h3>
-            <p>Selecciona un rol para asignar</p>
-            {!playerData.specialActionUsed && (
-              <button className="btn-skip" onClick={handleSkip}>
-                <span className="material-icons">skip_next</span>
-                Saltar personaje
+            <p>{currentCharacter.anime}</p>
+            {canSkip && (
+              <button className="btn-skip" onClick={handleSkipCharacter}>
+                <span>Saltar</span>
+                <span className="material-icons">close</span>
               </button>
             )}
           </div>
         </div>
       )}
 
+      {/* Botón flotante para mostrar personaje */}
+      {currentCharacter && !showCharacterCard && isMyTurn && (
+        <button 
+          className="btn-show-card-float" 
+          onClick={() => setShowCharacterCard(true)}
+          title="Ver personaje"
+        >
+          <span className="material-icons">visibility</span>
+          <span>Ver Personaje</span>
+        </button>
+      )}
+
+      {/* Instrucciones para reorganizar */}
+      {isReorganizePhase && isMyReorganizeTurn && showReorganizeCard && (
+        <div className="reorganize-instructions">
+          <div className="reorganize-card">
+            <button 
+              className="btn-hide-card" 
+              onClick={() => setShowReorganizeCard(false)}
+              title="Ocultar"
+            >
+              <span className="material-icons">visibility_off</span>
+            </button>
+            <span className="material-icons">swap_horiz</span>
+            <h3>Fase de Reorganizar</h3>
+            <h4 style={{color: 'white', margin: '10px 0'}}>Tu turno</h4>
+            
+            {myPlayerData.canReorganize ? (
+              <>
+                <p>
+                  {reorganizingRole 
+                    ? 'Selecciona el segundo personaje para intercambiar' 
+                    : 'Selecciona dos personajes de tu tablero para intercambiar'
+                  }
+                </p>
+                {reorganizingRole && (
+                  <button className="btn-cancel" onClick={() => setReorganizingRole(null)}>
+                    Cancelar selección
+                  </button>
+                )}
+              </>
+            ) : (
+              <p>No puedes reorganizar porque usaste la acción de Saltar</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Botón flotante reorganizar */}
+      {isReorganizePhase && isMyReorganizeTurn && !showReorganizeCard && (
+        <button 
+          className="btn-show-card-float" 
+          onClick={() => setShowReorganizeCard(true)}
+          title="Ver reorganizar"
+        >
+          <span className="material-icons">swap_horiz</span>
+          <span>Ver Reorganizar</span>
+        </button>
+      )}
+
       <main className="gameboard-main">
         <div className="game-board-grid">
-          {/* Lado del jugador */}
+          {/* Columna Jugador 1 */}
           <div className="player-column player1">
-            {ROLES.map((role) => (
-              <CharacterSlot
-                key={role}
-                character={playerData.board[role]}
-                isActive={isCurrentTurn && currentCharacter && !playerData.board[role]}
-                onClick={() => isCurrentTurn && currentCharacter && handleAssignCharacter(role)}
-              />
-            ))}
+            {ROLES.map((role) => {
+              const char = gameState.player1.board[role];
+              const canClick = !isReorganizePhase && isPlayer1 && isMyTurn && currentCharacter && !char;
+              const canReorganizeClick = isReorganizePhase && isPlayer1 && isMyReorganizeTurn && char && myPlayerData.canReorganize;
+              const isSelected = reorganizingRole === role;
+              const isGameEnd = gameState.state === 'GAME_END';
+
+              return (
+                <CharacterSlot
+                  key={role}
+                  character={char}
+                  isActive={canClick || canReorganizeClick}
+                  onClick={() => {
+                    if (canClick) handleAssignCharacter(role);
+                    if (canReorganizeClick) handleReorganizeSelect(role);
+                  }}
+                  isDimmed={!isPlayer1 && !isReorganizePhase && !isGameEnd}
+                  style={isSelected ? { border: '3px solid #ffd700', boxShadow: '0 0 20px #ffd700' } : {}}
+                />
+              );
+            })}
           </div>
 
-          {/* Divisor central con roles */}
+          {/* Roles */}
           <div className="role-divider">
             {ROLES.map((role) => (
               <RoleLabel key={role} role={role} icon={ROLE_ICONS[role]} />
             ))}
           </div>
 
-          {/* Lado del oponente */}
+          {/* Columna Jugador 2 */}
           <div className="player-column player2">
-            {ROLES.map((role) => (
-              <CharacterSlot
-                key={role}
-                character={opponentData.board[role]}
-                isActive={false}
-                isDimmed={true}
-              />
-            ))}
+            {ROLES.map((role) => {
+              const char = gameState.player2.board[role];
+              const canClick = !isReorganizePhase && !isPlayer1 && isMyTurn && currentCharacter && !char;
+              const canReorganizeClick = isReorganizePhase && !isPlayer1 && isMyReorganizeTurn && char && myPlayerData.canReorganize;
+              const isSelected = reorganizingRole === role;
+              const isGameEnd = gameState.state === 'GAME_END';
+
+              return (
+                <CharacterSlot
+                  key={role}
+                  character={char}
+                  isActive={canClick || canReorganizeClick}
+                  onClick={() => {
+                    if (canClick) handleAssignCharacter(role);
+                    if (canReorganizeClick) handleReorganizeSelect(role);
+                  }}
+                  isDimmed={isPlayer1 && !isReorganizePhase && !isGameEnd}
+                  style={isSelected ? { border: '3px solid #ffd700', boxShadow: '0 0 20px #ffd700' } : {}}
+                />
+              );
+            })}
           </div>
         </div>
       </main>
 
       <footer className="gameboard-footer">
         <div className="action-buttons">
-          <button className="btn-action info-btn">
-            <span className="material-icons">info</span>
-          </button>
-
-          {isCurrentTurn && !currentCharacter && (
-            <button 
-              className="btn-primary" 
-              onClick={handleDrawCharacter}
-              disabled={gameState.state === 'GAME_END'}
-            >
+          {/* Fase normal - Robar personaje */}
+          {!isReorganizePhase && !currentCharacter && isMyTurn && gameState.state !== 'GAME_END' && (
+            <button className="btn-primary" onClick={handleDrawCharacter}>
               <span className="material-icons">style</span>
               <span>ROBAR PERSONAJE</span>
             </button>
           )}
 
-          {isCurrentTurn && currentCharacter && (
-            <button
-              className="btn-primary"
-              onClick={handleEndTurn}
-              disabled={gameState.state === 'GAME_END'}
-            >
-              <span>TERMINAR TURNO</span>
-              <span className="material-icons">east</span>
+          {/* Fase de reorganizar - Saltar */}
+          {isReorganizePhase && isMyReorganizeTurn && myPlayerData.canReorganize && (
+            <button className="btn-secondary" onClick={handleSkipReorganize}>
+              <span>NO REORGANIZAR</span>
+              <span className="material-icons">close</span>
             </button>
           )}
 
-          <button className="btn-action history-btn">
-            <span className="material-icons">history_edu</span>
+          {/* Botón REVANCHA cuando termina */}
+          {gameState.state === 'GAME_END' && (
+            <button className="btn-primary btn-restart-footer" onClick={handleRestartGame}>
+              <span className="material-icons">refresh</span>
+              <span>REVANCHA</span>
+            </button>
+          )}
+
+          <button className="btn-action info-btn">
+            <span className="material-icons">info</span>
+          </button>
+
+          <button className="btn-secondary" onClick={handleReset}>
+            <span>SALIR</span>
+            <span className="material-icons">exit_to_app</span>
           </button>
         </div>
+
+        {/* Redes sociales */}
+        <SocialLinks variant="footer-variant" />
       </footer>
 
+      {/* Toast de error */}
       {error && (
         <div className="error-toast">
           <span>{error}</span>
@@ -298,13 +403,62 @@ export default function GameBoard({ roomId, playerRole, socket, onReset }) {
         </div>
       )}
 
-      <div className="game-info">
-        <p>Personajes restantes: {gameState.bagRemaining}</p>
-        <p>Turno #{gameState.turnCount}</p>
-        {playerData.specialActionUsed && (
-          <p className="special-used">⚠️ Acción especial usada</p>
-        )}
-      </div>
+      {/* Modal de Fin de Juego */}
+      {showGameEndModal && gameState && gameState.state === 'GAME_END' && (
+        <div className="game-end-overlay" onClick={() => setShowGameEndModal(false)}>
+          <div className="game-end-modal" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="modal-close-btn" 
+              onClick={() => setShowGameEndModal(false)}
+              title="Cerrar"
+            >
+              <span className="material-icons">close</span>
+            </button>
+            
+            <div className="modal-glow-effect"></div>
+            
+            <div className="modal-header">
+              <h1 className="modal-title">¡FIN DE LA PARTIDA!</h1>
+              <div className="modal-divider"></div>
+            </div>
+
+            <div className="modal-content">
+              <div className="game-stats">
+                <div className="stat-item">
+                  <span className="stat-label">Turnos jugados</span>
+                  <span className="stat-value">{gameState.turnCount || 0}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Personajes usados</span>
+                  <span className="stat-value">
+                    {Object.values(gameState.player1.board).filter(x => x).length + 
+                     Object.values(gameState.player2.board).filter(x => x).length}
+                  </span>
+                </div>
+              </div>
+
+              <div className="modal-message">
+                Ambos tableros completados
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button className="modal-btn btn-restart" onClick={handleRestartGame}>
+                <span className="material-icons">refresh</span>
+                <span>REVANCHA</span>
+              </button>
+              <button className="modal-btn btn-close" onClick={() => setShowGameEndModal(false)}>
+                <span className="material-icons">visibility</span>
+                <span>VER TABLERO</span>
+              </button>
+              <button className="modal-btn btn-home" onClick={handleReset}>
+                <span className="material-icons">home</span>
+                <span>INICIO</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
