@@ -14,21 +14,47 @@ function App() {
   const [socket, setSocket] = useState(null);
   const [gameMode, setGameMode] = useState(null);
   const [localSessionId, setLocalSessionId] = useState(null);
+  const [socketConnecting, setSocketConnecting] = useState(true);
+  const [socketError, setSocketError] = useState(false);
 
   useEffect(() => {
-    const newSocket = io(SERVER_URL);
-    setSocket(newSocket);
+    console.log('🔌 Connecting to server:', SERVER_URL);
+    
+    const newSocket = io(SERVER_URL, {
+      timeout: 10000, // 10 segundos timeout
+      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
+    });
 
     newSocket.on('connect', () => {
-      console.log('Connected to server:', newSocket.id);
+      console.log('✅ Connected to server:', newSocket.id);
+      setSocket(newSocket);
+      setSocketConnecting(false);
+      setSocketError(false);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Disconnected from server');
+      console.log('❌ Disconnected from server');
     });
 
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Connection error:', error);
+      setSocketError(true);
+      setSocketConnecting(false);
+    });
+
+    // Timeout: Si no conecta en 10 segundos, seguir sin socket
+    const timeout = setTimeout(() => {
+      if (!newSocket.connected) {
+        console.warn('⚠️ Socket timeout - continuing without connection');
+        setSocketConnecting(false);
+        setSocketError(true);
+      }
+    }, 10000);
+
     return () => {
-      newSocket.disconnect();
+      clearTimeout(timeout);
+      if (newSocket) newSocket.disconnect();
     };
   }, []);
 
@@ -45,15 +71,7 @@ function App() {
     setGameMode(null);
   };
 
-  if (!socket) {
-    return (
-      <div className="loading-screen">
-        <div className="loading-spinner"></div>
-        <p>Conectando al servidor...</p>
-      </div>
-    );
-  }
-
+  // NO bloquear la app - mostrar Home inmediatamente
   return (
     <Router>
       <div className="App">
@@ -63,7 +81,8 @@ function App() {
             element={
               <Home 
                 onModeSelect={handleModeSelect} 
-                socket={socket} 
+                socket={socket}
+                socketError={socketError}
               />
             } 
           />

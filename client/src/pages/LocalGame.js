@@ -27,16 +27,56 @@ export default function LocalGame({ sessionId, socket, onStart, onReset }) {
   const [showGameEndModal, setShowGameEndModal] = useState(false);
 
   useEffect(() => {
-    if (!sessionId) {
-      socket.emit('START_LOCAL_GAME');
-
-      socket.once('LOCAL_GAME_STARTED', (data) => {
-        setGameState(data.gameState);
-        onStart(data);
-        setLoading(false);
-      });
-    } else {
+    // Verificar que el socket exista y esté conectado
+    if (!socket) {
+      setError('Error de conexión. Recarga la página.');
       setLoading(false);
+      return;
+    }
+
+    const initializeGame = () => {
+      if (!sessionId) {
+        console.log('🎮 Iniciando juego local...');
+        socket.emit('START_LOCAL_GAME');
+
+        socket.once('LOCAL_GAME_STARTED', (data) => {
+          console.log('✅ Juego local iniciado:', data);
+          setGameState(data.gameState);
+          if (onStart && typeof onStart === 'function') {
+            onStart(data);
+          }
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
+    };
+
+    // Si el socket ya está conectado, iniciar
+    if (socket.connected) {
+      initializeGame();
+    } else {
+      // Si no está conectado, esperar a que conecte
+      console.log('⏳ Esperando conexión del servidor...');
+      
+      const connectHandler = () => {
+        console.log('✅ Servidor conectado, iniciando juego...');
+        initializeGame();
+      };
+
+      const errorHandler = () => {
+        setError('No se pudo conectar al servidor');
+        setLoading(false);
+      };
+
+      socket.once('connect', connectHandler);
+      socket.once('connect_error', errorHandler);
+
+      // Cleanup
+      return () => {
+        socket.off('connect', connectHandler);
+        socket.off('connect_error', errorHandler);
+      };
     }
 
     socket.on('CHARACTER_DRAWN', (data) => {
