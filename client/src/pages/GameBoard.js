@@ -27,6 +27,8 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
   const [showReorganizeCard, setShowReorganizeCard] = useState(true);
   const [showGameEndModal, setShowGameEndModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [rematchRequested, setRematchRequested] = useState(false);
+  const [waitingForRematch, setWaitingForRematch] = useState(false);
 
   useEffect(() => {
     console.log('🎮 GameBoard montado - RoomID:', roomId, 'PlayerRole:', playerRole, 'PlayerID:', playerId);
@@ -97,10 +99,35 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
       setTimeout(() => setError(null), 5000);
     });
 
-    // Solicitar estado inicial con delay para dar tiempo a que el juego inicie
+    socket.on('REMATCH_REQUESTED', (data) => {
+      console.log('🔄 Revancha solicitada por el oponente');
+      setRematchRequested(true);
+    });
+
+    socket.on('REMATCH_ACCEPTED', (data) => {
+      console.log('✅ Revancha aceptada, reiniciando juego');
+      setGameState(data.gameState);
+      setCurrentCharacter(null);
+      setReorganizingRole(null);
+      setShowCharacterCard(true);
+      setShowReorganizeCard(true);
+      setShowGameEndModal(false);
+      setRematchRequested(false);
+      setWaitingForRematch(false);
+      setLoading(false);
+    });
+
+    socket.on('REMATCH_DECLINED', (data) => {
+      console.log('❌ Revancha rechazada');
+      setError(data.message);
+      setWaitingForRematch(false);
+      setRematchRequested(false);
+    });
+
+    // Solicitar estado inicial con delay mayor para evitar error
     setTimeout(() => {
       socket.emit('GAME_STATE_REQUEST', { roomId });
-    }, 500);
+    }, 1500);
 
     return () => {
       socket.off('GAME_STARTED');
@@ -113,6 +140,9 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
       socket.off('GAME_FINISHED');
       socket.off('PLAYER_DISCONNECTED');
       socket.off('ERROR');
+      socket.off('REMATCH_REQUESTED');
+      socket.off('REMATCH_ACCEPTED');
+      socket.off('REMATCH_DECLINED');
     };
   }, [roomId, socket, playerRole, playerId]);
 
@@ -160,8 +190,21 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
   };
 
   const handleRestartGame = () => {
-    setError('La revancha aún no está implementada en modo online');
-    setShowGameEndModal(false);
+    console.log('🔄 Solicitando revancha...');
+    setWaitingForRematch(true);
+    socket.emit('REQUEST_REMATCH', { roomId });
+  };
+
+  const handleAcceptRematch = () => {
+    console.log('✅ Aceptando revancha...');
+    setRematchRequested(false);
+    socket.emit('ACCEPT_REMATCH', { roomId });
+  };
+
+  const handleDeclineRematch = () => {
+    console.log('❌ Rechazando revancha...');
+    setRematchRequested(false);
+    socket.emit('DECLINE_REMATCH', { roomId });
   };
 
   if (loading) {
@@ -215,6 +258,46 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
           <div className="timer">∞</div>
         </div>
       </header>
+
+      {/* Botones principales arriba */}
+      <div className="action-buttons-top">
+        {/* Fase normal - Robar personaje */}
+        {!isReorganizePhase && !currentCharacter && isMyTurn && gameState.state !== 'GAME_END' && (
+          <button className="btn-primary" onClick={handleDrawCharacter}>
+            <span className="material-icons">style</span>
+            <span>ROBAR PERSONAJE</span>
+          </button>
+        )}
+
+        {/* Fase de reorganizar - Saltar */}
+        {isReorganizePhase && isMyReorganizeTurn && myPlayerData.canReorganize && (
+          <button className="btn-secondary" onClick={handleSkipReorganize}>
+            <span>NO REORGANIZAR</span>
+            <span className="material-icons">close</span>
+          </button>
+        )}
+
+        {/* Botón REVANCHA cuando termina */}
+        {gameState.state === 'GAME_END' && !waitingForRematch && !rematchRequested && (
+          <button className="btn-primary" onClick={handleRestartGame}>
+            <span className="material-icons">refresh</span>
+            <span>REVANCHA</span>
+          </button>
+        )}
+
+        {/* Esperando respuesta de revancha */}
+        {waitingForRematch && (
+          <div className="waiting-rematch-indicator">
+            <span className="material-icons">hourglass_empty</span>
+            <span>Esperando respuesta...</span>
+          </div>
+        )}
+
+        {/* Botón INFO siempre visible */}
+        <button className="btn-action info-btn" onClick={() => setShowInfoModal(true)}>
+          <span className="material-icons">info</span>
+        </button>
+      </div>
 
       {/* Tarjeta de personaje actual */}
       {currentCharacter && isMyTurn && showCharacterCard && (
@@ -367,34 +450,6 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
 
       <footer className="gameboard-footer">
         <div className="action-buttons">
-          {/* Fase normal - Robar personaje */}
-          {!isReorganizePhase && !currentCharacter && isMyTurn && gameState.state !== 'GAME_END' && (
-            <button className="btn-primary" onClick={handleDrawCharacter}>
-              <span className="material-icons">style</span>
-              <span>ROBAR PERSONAJE</span>
-            </button>
-          )}
-
-          {/* Fase de reorganizar - Saltar */}
-          {isReorganizePhase && isMyReorganizeTurn && myPlayerData.canReorganize && (
-            <button className="btn-secondary" onClick={handleSkipReorganize}>
-              <span>NO REORGANIZAR</span>
-              <span className="material-icons">close</span>
-            </button>
-          )}
-
-          {/* Botón REVANCHA cuando termina */}
-          {gameState.state === 'GAME_END' && (
-            <button className="btn-primary btn-restart-footer" onClick={handleRestartGame}>
-              <span className="material-icons">refresh</span>
-              <span>REVANCHA</span>
-            </button>
-          )}
-
-          <button className="btn-action info-btn" onClick={() => setShowInfoModal(true)}>
-            <span className="material-icons">info</span>
-          </button>
-
           <button className="btn-secondary" onClick={handleReset}>
             <span>SALIR</span>
             <span className="material-icons">exit_to_app</span>
@@ -410,6 +465,33 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
         <div className="error-toast">
           <span>{error}</span>
           <button onClick={() => setError(null)}>×</button>
+        </div>
+      )}
+
+      {/* Modal de Solicitud de Revancha */}
+      {rematchRequested && (
+        <div className="game-end-overlay">
+          <div className="rematch-request-modal">
+            <div className="modal-glow-effect"></div>
+            
+            <div className="rematch-icon-container">
+              <span className="material-icons rematch-icon">refresh</span>
+            </div>
+            
+            <h2 className="rematch-title">¡Solicitud de Revancha!</h2>
+            <p className="rematch-message">Tu oponente quiere jugar otra partida</p>
+            
+            <div className="rematch-actions">
+              <button className="modal-btn btn-restart" onClick={handleAcceptRematch}>
+                <span className="material-icons">check_circle</span>
+                <span>ACEPTAR</span>
+              </button>
+              <button className="modal-btn btn-home" onClick={handleDeclineRematch}>
+                <span className="material-icons">cancel</span>
+                <span>RECHAZAR</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

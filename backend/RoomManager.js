@@ -141,6 +141,38 @@ class RoomManager {
   }
 
   // ==========================================
+  // RESETEAR JUEGO (REVANCHA)
+  // ==========================================
+  resetGame(roomId) {
+    const room = this.rooms.get(roomId);
+    
+    if (!room) {
+      return { success: false, error: 'ROOM_NOT_FOUND' };
+    }
+
+    if (!room.gameEngine) {
+      return { success: false, error: 'NO_GAME_TO_RESET' };
+    }
+
+    // Crear nuevo GameEngine manteniendo los mismos jugadores
+    const GameEngine = require('./GameEngine');
+    const gameEngine = new GameEngine(room.players[0].id, room.players[1].id);
+    gameEngine.startGame();
+    
+    room.gameEngine = gameEngine;
+    room.status = 'IN_GAME';
+    room.lastActivity = new Date();
+
+    console.log(`[GAME] Revancha iniciada en sala: ${room.roomName}`);
+
+    return {
+      success: true,
+      gameState: gameEngine.getGameState(),
+      currentPlayer: gameEngine.currentPlayerTurn
+    };
+  }
+
+  // ==========================================
   // OBTENER SALA
   // ==========================================
   getRoom(roomId) {

@@ -752,3 +752,149 @@
   color: white;
   font-weight: 600;
 }
+/* AGREGAR AL FINAL DE GameBoardExtras.css */
+
+/* ============================================
+   SISTEMA DE REVANCHA
+   ============================================ */
+
+/* Indicador de esperando revancha */
+.waiting-rematch-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(164, 19, 236, 0.2);
+  border: 1px solid rgba(164, 19, 236, 0.4);
+  padding: 0.875rem 1.5rem;
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  animation: pulse-waiting 2s ease-in-out infinite;
+}
+
+.waiting-rematch-indicator .material-icons {
+  font-size: 1.25rem;
+  animation: rotate-waiting 2s linear infinite;
+}
+
+@keyframes pulse-waiting {
+  0%, 100% {
+    opacity: 0.7;
+    box-shadow: 0 4px 15px rgba(164, 19, 236, 0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 4px 25px rgba(164, 19, 236, 0.4);
+  }
+}
+
+@keyframes rotate-waiting {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Modal de solicitud de revancha */
+.rematch-request-modal {
+  background: linear-gradient(180deg, rgba(28, 16, 34, 0.98) 0%, rgba(10, 5, 12, 1) 100%);
+  border: 2px solid rgba(164, 19, 236, 0.4);
+  border-radius: 2rem;
+  padding: 3rem 2rem;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 0 50px rgba(164, 19, 236, 0.5), 0 0 100px rgba(0, 212, 255, 0.3);
+  animation: modalSlideIn 0.4s ease-out;
+  text-align: center;
+}
+
+.rematch-icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.rematch-icon {
+  font-size: 5rem;
+  color: var(--primary);
+  animation: rotate-pulse 3s ease-in-out infinite;
+}
+
+@keyframes rotate-pulse {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  50% {
+    transform: rotate(360deg) scale(1);
+  }
+  75% {
+    transform: rotate(180deg) scale(1.1);
+  }
+}
+
+.rematch-title {
+  font-size: 2rem;
+  font-weight: 900;
+  color: white;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 20px rgba(164, 19, 236, 0.8);
+}
+
+.rematch-message {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+}
+
+.rematch-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.rematch-actions .modal-btn {
+  flex: 1;
+  max-width: 200px;
+}
+
+@media (max-width: 640px) {
+  .rematch-request-modal {
+    padding: 2rem 1.5rem;
+  }
+
+  .rematch-icon {
+    font-size: 4rem;
+  }
+
+  .rematch-title {
+    font-size: 1.5rem;
+  }
+
+  .rematch-message {
+    font-size: 1rem;
+  }
+
+  .rematch-actions {
+    flex-direction: column;
+  }
+
+  .rematch-actions .modal-btn {
+    max-width: 100%;
+  }
+
+  .waiting-rematch-indicator {
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+  }
+}

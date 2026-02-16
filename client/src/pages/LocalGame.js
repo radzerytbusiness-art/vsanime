@@ -269,6 +269,13 @@ export default function LocalGame({ sessionId, socket, onStart, onReset }) {
           </button>
         )}
 
+        {gameState.state === 'GAME_END' && (
+          <button className="btn-primary" onClick={handleRestartGame}>
+            <span className="material-icons">refresh</span>
+            <span>REVANCHA</span>
+          </button>
+        )}
+
         <button className="btn-action info-btn" onClick={() => setShowInfoModal(true)}>
           <span className="material-icons">info</span>
         </button>
@@ -419,19 +426,7 @@ export default function LocalGame({ sessionId, socket, onStart, onReset }) {
 
       <footer className="gameboard-footer">
         <div className="action-buttons">
-
-          {/* Botón REVANCHA cuando termina el juego */}
-          {gameState.state === 'GAME_END' && (
-            <button className="btn-primary btn-restart-footer" onClick={handleRestartGame}>
-              <span className="material-icons">refresh</span>
-              <span>REVANCHA</span>
-            </button>
-          )}
-
-          <button className="btn-action info-btn" onClick={() => setShowInfoModal(true)}>
-            <span className="material-icons">info</span>
-          </button>
-
+          
           <button className="btn-secondary" onClick={handleReset}>
             <span>SALIR</span>
             <span className="material-icons">exit_to_app</span>

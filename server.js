@@ -449,6 +449,67 @@ io.on('connection', (socket) => {
   });
 
   // ==========================================
+  // SISTEMA DE REVANCHA
+  // ==========================================
+
+  // Solicitar revancha
+  socket.on('REQUEST_REMATCH', (data) => {
+    console.log(`🔄 [REMATCH] Socket ${socket.id} solicita revancha en sala ${data.roomId}`);
+    
+    const room = global.roomManager.getRoom(data.roomId);
+    if (!room) {
+      socket.emit('ERROR', { message: 'Sala no encontrada' });
+      return;
+    }
+
+    // Notificar al otro jugador
+    socket.to(data.roomId).emit('REMATCH_REQUESTED', {
+      message: 'Tu oponente quiere jugar una revancha'
+    });
+
+    console.log(`📨 [REMATCH] Solicitud enviada al otro jugador en sala ${data.roomId}`);
+  });
+
+  // Aceptar revancha
+  socket.on('ACCEPT_REMATCH', (data) => {
+    console.log(`✅ [REMATCH] Socket ${socket.id} acepta revancha en sala ${data.roomId}`);
+    
+    const room = global.roomManager.getRoom(data.roomId);
+    if (!room) {
+      socket.emit('ERROR', { message: 'Sala no encontrada' });
+      return;
+    }
+
+    // Resetear el juego
+    const result = global.roomManager.resetGame(data.roomId);
+    
+    if (!result.success) {
+      socket.emit('ERROR', { message: 'Error al resetear el juego' });
+      return;
+    }
+
+    // Notificar a ambos jugadores que la revancha ha iniciado
+    io.to(data.roomId).emit('REMATCH_ACCEPTED', {
+      gameState: result.gameState,
+      currentPlayer: result.currentPlayer
+    });
+
+    console.log(`🎮 [REMATCH] Revancha iniciada en sala ${data.roomId}`);
+  });
+
+  // Rechazar revancha
+  socket.on('DECLINE_REMATCH', (data) => {
+    console.log(`❌ [REMATCH] Socket ${socket.id} rechaza revancha en sala ${data.roomId}`);
+    
+    // Notificar al otro jugador
+    socket.to(data.roomId).emit('REMATCH_DECLINED', {
+      message: 'Tu oponente rechazó la revancha'
+    });
+
+    console.log(`📨 [REMATCH] Rechazo enviado al otro jugador en sala ${data.roomId}`);
+  });
+
+  // ==========================================
   // EVENTOS DE JUEGO LOCAL
   // ==========================================
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/pages/Home.css';
 
+
 export default function Home({ onModeSelect, socket, onRoomCreated, onRoomJoined, socketError }) {
   const navigate = useNavigate();
   const [showModeSelection, setShowModeSelection] = useState(false);
