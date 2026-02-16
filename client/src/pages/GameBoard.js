@@ -435,12 +435,13 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
             <div className="modal-content info-content">
               <div className="info-section">
                 <h3>🎯 Objetivo</h3>
-                <p>Completa tu tablero de 6 personajes antes que tu oponente. Cada personaje debe ocupar un rol específico.</p>
+                <p>Completa tu tablero de 6 personajes. Cada personaje debe ocupar un rol específico y al final se evaluará qué personaje es mejor en base al rol y la propia fuerza del personaje.</p>
               </div>
 
               <div className="info-section">
                 <h3>⚔️ Roles del Tablero</h3>
-                <p><strong>Capitán:</strong> Líder del equipo<br/>
+                <p>El tablero cuenta con 6 roles:<br/>
+                <strong>Capitán:</strong> Líder del equipo<br/>
                 <strong>Vice-Capitán:</strong> Segunda al mando<br/>
                 <strong>Tanque:</strong> Defensor<br/>
                 <strong>Healer:</strong> Sanador<br/>
@@ -451,17 +452,17 @@ export default function GameBoard({ roomId, playerRole, playerId, socket, onRese
                 <h3>🎴 Turnos</h3>
                 <p>1. Roba un personaje de la bolsa<br/>
                 2. Asigna el personaje a un rol vacío de tu tablero<br/>
-                3. Opcional: Usa "Saltar" (solo 1 vez) para cambiar de personaje</p>
+                3. Opcional: Usa "Saltar" (solo 1 vez por partida) para cambiar de personaje. Si lo haces, no podrás usar tu opción de reorganizar.</p>
               </div>
 
               <div className="info-section">
                 <h3>🔄 Fase de Reorganizar</h3>
-                <p>Después de asignar, puedes intercambiar 2 personajes de posición en tu tablero. Si usaste "Saltar", no puedes reorganizar.</p>
+                <p>Después de asignar, puedes intercambiar 1 personaje de posición en tu tablero. Si usaste "Saltar", no puedes reorganizar.</p>
               </div>
 
               <div className="info-section">
                 <h3>🏆 Victoria</h3>
-                <p>El primer jugador en completar los 6 roles gana la partida.</p>
+                <p>Se debate quién tiene un mejor equipo en base a sus roles y capacidades. El público o participantes votan por cada rol, el que tenga más puntos gana.</p>
               </div>
             </div>
 
