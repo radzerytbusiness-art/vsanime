@@ -155,7 +155,16 @@ class CharacterBag {
       {name: "Maki", image: "./assets/images/characters/maki.jpg"},
       {name: "Nobara", image: "./assets/images/characters/nobara.jpg"},
       {name: "Fushiguro", image: "./assets/images/characters/fushiguro.jpg"},
-      {name: "Itadori", image: "./assets/images/characters/itadori.jpg"}
+      {name: "Itadori", image: "./assets/images/characters/itadori.jpg"},
+      {name: "Illumi Zoldyck", image: "./assets/images/characters/illumizoldyck.jpg"},
+      {name: "Chrollo Lucilfer", image: "./assets/images/characters/chrollolucifer.jpg"},
+      {name: "Zeno Zoldyck", image: "./assets/images/characters/zenozoldyck.jpg"},
+      {name: "Silva Zoldyck", image: "./assets/images/characters/silvazolzoldyck.jpg"},
+      {name: "Hisoka", image: "./assets/images/characters/hisoka.jpg"},
+      {name: "Leorio", image: "./assets/images/characters/leorio.jpg"},
+      {name: "Kurapika", image: "./assets/images/characters/kurapika.jpg"},
+      {name: "Killua", image: "./assets/images/characters/killua.jpg"},
+      {name: "Gon", image: "./assets/images/characters/gon.jpg"}
     ];
 
     this.characters = animeCharacters.map((char, index) => 
